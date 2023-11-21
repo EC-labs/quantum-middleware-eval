@@ -428,7 +428,7 @@ def workflow(
         'plot_predictions': metrics_plot_predictions
     }
 
-    return training_result, metrics
+    return metrics
 
 
 def run_workflow(
@@ -455,14 +455,18 @@ def run_workflow(
 
         if result.status == 'FAILED':
             print("Workflow failed, something went wrong")
-            return
+            all_results.append({
+                    'id': dispatch_id,
+                    'config': [n_qubits, n_shots, n_epochs, batch_size, learning_rate],
+                    'error': 'Workflow failed'
+            })
         else:
             print(f"Workflow finished with result: {result.result}")
 
             all_results.append({
                 'id': dispatch_id,
-                'config': [range_qubits, range_shots, range_epochs, range_batch_sizes, range_learning_rates],
-                'metrics': result.result[-1]
+                'config': [n_qubits, n_shots, n_epochs, batch_size, learning_rate],
+                'metrics': result.result
             })
 
     return all_results

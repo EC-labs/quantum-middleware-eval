@@ -1,4 +1,4 @@
-covalent==0.209.1
+covalent
 matplotlib==3.7.1
 numpy==1.23.5
 qiskit-aer==0.12.0
