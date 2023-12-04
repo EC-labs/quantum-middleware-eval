@@ -189,7 +189,7 @@ def workflow(
     return metrics
 
 def run_workflow(
-        range_iterations: List[int] = [100, 200],
+        range_iterations: List[int] = [10, 20],
         range_layers: List[int] = [1, 2, 4, 6],
         range_qubits: List[int] = [2, 4, 6],
         range_batch_sizes: List[int] = [16, 32],
