@@ -131,35 +131,30 @@ class QuantumFunction(torch.autograd.Function):
         ctx.qc = qc
         return qc.run(batch_inputs)
 
-    @staticmethod
-    def backward(
-        ctx,
-        grad_output: Tensor
-    ):
-        """backward pass computation using parameter shift rule"""
-        batch_inputs = ctx.saved_tensors[0]
-        qc = ctx.qc
+    # @staticmethod
+    # def backward(
+    #     ctx,
+    #     grad_output: Tensor
+    # ):
+    #     """backward pass computation using parameter shift rule"""
+    #     batch_inputs = ctx.saved_tensors[0]
+    #     qc = ctx.qc
 
-        shifted_inputs_r = torch.empty(batch_inputs.shape)
-        shifted_inputs_l = torch.empty(batch_inputs.shape)
+    #     shifted_inputs_r = torch.empty(batch_inputs.shape)
+    #     shifted_inputs_l = torch.empty(batch_inputs.shape)
 
-        # loop over each input in the batch
-        for i, _input in enumerate(batch_inputs):
+    #     for i, _input in enumerate(batch_inputs):
+    #         for j in range(len(_input)):
+    #             d = torch.zeros(_input.shape)
+    #             d[j] = qc.shift
+    #             shifted_inputs_r[i, j] = _input + d
+    #             shifted_inputs_l[i, j] = _input - d
 
-            # loop entries in each input
-            for j in range(len(_input)):
+    #     # run gradients in batches
+    #     exps_r = qc.run(shifted_inputs_r)
+    #     exps_l = qc.run(shifted_inputs_l)
 
-                # compute parameters for parameter shift rule
-                d = torch.zeros(_input.shape)
-                d[j] = qc.shift
-                shifted_inputs_r[i, j] = _input + d
-                shifted_inputs_l[i, j] = _input - d
-
-        # run gradients in batches
-        exps_r = qc.run(shifted_inputs_r)
-        exps_l = qc.run(shifted_inputs_l)
-
-        return (exps_r - exps_l).float() * grad_output.float(), None, None
+    #     return (exps_r - exps_l).float() * grad_output.float(), None, None
 
 
 class QuantumLayer(torch.nn.Module):
@@ -403,7 +398,7 @@ def plot_predictions(
 
 @ct.lattice
 def workflow(
-    n_qubits: int = 1,
+    n_qubits: int = 4,
     n_shots: int = 2,
     n_epochs: int = 1,
     batch_size: int = 16,
@@ -432,13 +427,14 @@ def workflow(
 
 
 def run_workflow(
-    range_qubits: List[int] = [1, 2],
-    range_shots: List[int] = [100, 200],
-    range_epochs: List[int] = [1, 2],
-    range_batch_sizes: List[int] = [16, 32],
-    range_learning_rates: List[float] = [1e-4, 1e-3]
+    range_qubits: List[int] = [8],
+    range_shots: List[int] = [10],
+    range_epochs: List[int] = [1],
+    range_batch_sizes: List[int] = [6],
+    range_learning_rates: List[float] = [1e-4]
 ):
     all_results = []
+
 
     for n_qubits, n_shots, n_epochs, batch_size, learning_rate in itertools.product(range_qubits, range_shots, range_epochs, range_batch_sizes, range_learning_rates):
         print(f"Running workflow with: qubits={n_qubits}, shots={n_shots}, epochs={n_epochs}, batch_size={batch_size}, learning_rate={learning_rate}")
@@ -448,8 +444,10 @@ def run_workflow(
             n_shots=n_shots,
             n_epochs=n_epochs,
             batch_size=batch_size,
+            image_size=244,
             learning_rate=learning_rate
         )
+
 
         result = ct.get_result(dispatch_id, wait=True)
 
@@ -473,21 +471,26 @@ def run_workflow(
 
 
 if __name__ == "__main__":
-    results = run_workflow()
-    
-    with open('metrics.csv', mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['Dispatch ID', 'Qubits', 'Shots', 'Epochs', 'Batch Size', 'Learning Rate', 'Training Metrics', 'Prediction Metrics'])
-        for result in results:
-            config = result['config']
-            metrics_train = result['metrics']['train_model']
-            metrics_pred = result['metrics']['plot_predictions']
-            writer.writerow([
-                result['id'], 
-                config[0], config[1], config[2], config[3], config[4], 
-                metrics_train,
-                metrics_pred
-            ])
+    # results = run_workflow()
 
-    print(f"Results written to metrics.csv")
+    dispatch_id = ct.dispatch(workflow)()
+    print(f"\n{dispatch_id}")
+    res = ct.get_result(dispatch_id, wait=True)
+    print(res)
+    
+    # with open('metrics.csv', mode='w', newline='', encoding='utf-8') as file:
+    #     writer = csv.writer(file)
+    #     writer.writerow(['Dispatch ID', 'Qubits', 'Shots', 'Epochs', 'Batch Size', 'Learning Rate', 'Training Metrics', 'Prediction Metrics'])
+    #     for result in results:
+    #         config = result['config']
+    #         metrics_train = result['metrics']['train_model']
+    #         metrics_pred = result['metrics']['plot_predictions']
+    #         writer.writerow([
+    #             result['id'], 
+    #             config[0], config[1], config[2], config[3], config[4], 
+    #             metrics_train,
+    #             metrics_pred
+    #         ])
+
+    # print(f"Results written to metrics.csv")
     

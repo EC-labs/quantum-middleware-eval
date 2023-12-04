@@ -48,7 +48,7 @@ def make_cost_function(circuit, cost_h, qubits):
 
 @ct.electron
 def get_random_initialization(p=1):
-    return np.random.uniform(0, 2 * np.pi, (2, p))
+    return np.random.uniform(0, 2 * np.pi, (2, p), requires_grad=True)
 
 
 @ct.electron
@@ -138,8 +138,8 @@ def workflow(
 
 
 def run_workflow(
-    range_qubits: List[int] = [1, 2, 4, 8, 16],
-    range_iterations: List[int] = [100, 200, 400, 800],
+    range_qubits: List[int] = [2],
+    range_iterations: List[int] = [10],
 ):
     all_results = []
 
